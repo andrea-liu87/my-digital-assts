@@ -11,6 +11,8 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
  */
 contract DigitalAssets is Ownable {
     error DigitalAssets_InputIsEmpty();
+    error DigitalAssets_ChainIdIsNotRegistered(uint256 chainId);
+    error DigitalAssets_ChainIdHasBeenRegistered(uint256 chainId);
 
     // Mapping from chainId to chainName
     mapping(uint256 => string) public s_chainIdToName;
@@ -20,7 +22,7 @@ contract DigitalAssets is Ownable {
 
     address private user;
 
-    constructor(address _user) {
+    constructor(address _user) Ownable(msg.sender) {
         user = _user;
         initializeDefaultChains();
     }
@@ -65,10 +67,11 @@ contract DigitalAssets is Ownable {
     }
 
     function getChainName(uint256 _chainId) public view returns (string memory) {
-        if (bytes(name).length < 0) {
-            revert DigitalAssets_InputIsEmpty();
+        string memory name  = s_chainIdToName[_chainId];
+        if (bytes(name).length == 0) {
+            revert DigitalAssets_ChainIdIsNotRegistered(_chainId);
         }
-        return s_chainIdToName[_chainId];
+        return name;
     }
 
     function getCurrentChainName() public view returns (string memory) {
@@ -81,7 +84,7 @@ contract DigitalAssets is Ownable {
             revert DigitalAssets_InputIsEmpty();
         }
         if (bytes(s_chainIdToName[_chainId]).length > 0) {
-            revert DigitalAssets_ChainIdHasBeenRegistered();
+            revert DigitalAssets_ChainIdHasBeenRegistered(_chainId);
         }
 
         s_chainIdToName[_chainId] = _chainName;
@@ -90,7 +93,7 @@ contract DigitalAssets is Ownable {
 
     function updateChain(uint256 _chainId, string memory _chainName) public onlyOwner {
         if (bytes(s_chainIdToName[_chainId]).length == 0) {
-            revert DigitalAssets_ChainIdIsNotRegistered();
+            revert DigitalAssets_ChainIdIsNotRegistered(_chainId);
         }
         if (bytes(_chainName).length == 0) {
             revert DigitalAssets_InputIsEmpty();
